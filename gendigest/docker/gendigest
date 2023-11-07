@@ -1,0 +1,5 @@
+#!/bin/bash
+F=/bin/gendigest-amd64
+uname -p |egrep 'arm|aarch'
+[ $? -eq 0 ] && F=/bin/gendigest-arm64
+$F "$@"

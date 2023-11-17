@@ -31,7 +31,7 @@ jobs:
                 echo "$APPLICATIONP12" | base64 -d > app.p12
                 security import app.p12 -k build.keychain -P $keypw -A
                 security set-key-partition-list -S apple-tool:,apple: -s -k mysecretpassword build.keychain
-            - name: "Build, sign, package and notarize"
+            - name: "Build, sign, package and notarize" #xcrun notarytool log --apple-id xxx --password 'xxx' --team-id xxx NOTARIZE-ID-HERE
               env:
                   appleid: ${{ secrets.APPLEID }}
                   applepw: ${{ secrets.APPLEPW }}

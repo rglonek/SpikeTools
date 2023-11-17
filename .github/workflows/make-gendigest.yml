@@ -1,0 +1,53 @@
+name: Gendigest
+
+on:
+    workflow_dispatch:
+jobs:
+    build-and-release:
+        runs-on: macos-13
+        steps:
+            - name: "Git checkout"
+              uses: actions/checkout@v3
+            - name: "Install Homebrew"
+              run: /bin/bash -c "NONINTERACTIVE=1 $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            - name: "Install Dependencies"
+              run: |
+                /usr/local/bin/brew install --overwrite upx zip make wget jq
+            - name: "Install golang"
+              run: |
+                wget https://go.dev/dl/go1.21.3.darwin-amd64.pkg
+                sudo installer -store -pkg go1.21.3.darwin-amd64.pkg -target /
+            - name: "Prepare keychain for signing MacOS"
+              env:
+                  keypw: ${{ secrets.KEYPW }}
+                  APPLICATIONP12: ${{ secrets.APPLICATIONP12 }}
+              run: |
+                set -e
+                security create-keychain -p mysecretpassword build.keychain
+                security default-keychain -s build.keychain
+                security unlock-keychain -p mysecretpassword build.keychain
+                security set-keychain-settings build.keychain
+                security unlock-keychain -p mysecretpassword build.keychain
+                echo "$APPLICATIONP12" | base64 -d > app.p12
+                security import app.p12 -k build.keychain -P $keypw -A
+                security set-key-partition-list -S apple-tool:,apple: -s -k mysecretpassword build.keychain
+            - name: "Build, sign, package and notarize"
+              env:
+                  appleid: ${{ secrets.APPLEID }}
+                  applepw: ${{ secrets.APPLEPW }}
+                  applesigner: ${{ secrets.APPLESIGNER }}
+                  appleteamid: ${{ secrets.APPLETEAMID }}
+              run: |
+                set -e
+                export PATH=$PATH:/usr/local/bin:/usr/local/go/bin
+                cd ~/work/SpikeTools/SpikeTools/gendigest && make distbuild
+            - name: "Create a new release"
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                set -e
+                cd ~/work/SpikeTools/SpikeTools/gendigest/bin
+                COMMIT=$(git rev-parse --short HEAD)
+                TAG=GenDigest-${COMMIT}
+                FULLCOMMIT=$(git rev-parse HEAD)
+                gh release create -R github.com/rglonek/SpikeTools --notes-file ../README.md --target ${FULLCOMMIT} --title "GenDigest - ${COMMIT}" ${TAG} gendigest-linux-amd64.zip gendigest-linux-arm64.zip gendigest-macos-amd64.zip gendigest-macos-arm64.zip

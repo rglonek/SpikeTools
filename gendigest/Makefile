@@ -29,10 +29,10 @@ package:
 
 .PHONY: sign
 sign:
-	cd bin && codesign --verbose --deep --timestamp --force --options runtime --sign '${applesigner}' aerolab-macos-amd64
-	cd bin && codesign --verbose --verify aerolab-macos-amd64
-	cd bin && codesign --verbose --deep --timestamp --force --options runtime --sign '${applesigner}' aerolab-macos-arm64
-	cd bin && codesign --verbose --verify aerolab-macos-arm64
+	cd bin && codesign --verbose --deep --timestamp --force --options runtime --sign '${applesigner}' gendigest-macos-amd64
+	cd bin && codesign --verbose --verify gendigest-macos-amd64
+	cd bin && codesign --verbose --deep --timestamp --force --options runtime --sign '${applesigner}' gendigest-macos-arm64
+	cd bin && codesign --verbose --verify gendigest-macos-arm64
 
 .PHONY: notarize
 notarize: notarize-amd64 notarize-arm64

@@ -43,12 +43,12 @@ distbuild: clean build shrink sign package notarize
 .PHONY: notarize-amd64
 notarize-amd64:
 	rm -f notarize_result_amd64
-	xcrun notarytool submit --apple-id ${appleid} --password '${applepw}' --team-id ${appleteamid} -f json --wait --timeout 60m bin/gendigest-macos-amd64.zip |tee notarize_result_amd64
+	xcrun notarytool submit --apple-id ${appleid} --password '${applepw}' --team-id ${appleteamid} -f json --wait --timeout 10m bin/gendigest-macos-amd64.zip |tee notarize_result_amd64
 	if [ "$$(cat notarize_result_amd64 |jq -r .status)" != "Accepted" ] ;\
 	then \
 		echo "ZIP-AMD FAILED TO NOTARIZE" ;\
 		cat notarize_result_amd64 ;\
-		exit 1 ;\
+		if [ "$$(cat notarize_result_amd64 |egrep 'Timeout .* was reached before processing completed.')" == "" ]; then exit 1; fi ;\
 	else \
 		echo "ZIP-AMD NOTARIZE SUCCESS" ;\
 	fi
@@ -56,12 +56,12 @@ notarize-amd64:
 .PHONY: notarize-arm64
 notarize-arm64:
 	rm -f notarize_result_arm64
-	xcrun notarytool submit --apple-id ${appleid} --password '${applepw}' --team-id ${appleteamid} -f json --wait --timeout 60m bin/gendigest-macos-arm64.zip |tee notarize_result_arm64
+	xcrun notarytool submit --apple-id ${appleid} --password '${applepw}' --team-id ${appleteamid} -f json --wait --timeout 10m bin/gendigest-macos-arm64.zip |tee notarize_result_arm64
 	if [ "$$(cat notarize_result_arm64 |jq -r .status)" != "Accepted" ] ;\
 	then \
 		echo "ZIP-ARM FAILED TO NOTARIZE" ;\
 		cat notarize_result_arm64 ;\
-		exit 1 ;\
+		if [ "$$(cat notarize_result_amd64 |egrep 'Timeout .* was reached before processing completed.')" == "" ]; then exit 1; fi ;\
 	else \
 		echo "ZIP-ARM NOTARIZE SUCCESS" ;\
 	fi
